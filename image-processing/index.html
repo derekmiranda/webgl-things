@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<meta http-equiv="X-UA-Compatible" content="ie=edge">
+	<title>WebGL Fundamentals</title>
+	<style>
+		body {
+			margin: 0;
+		}
+		canvas {
+			width: 100vw;
+			height: 100vh;
+			display: block;
+		}
+
+	</style>
+</head>
+<body>
+	<canvas id="canvas"></canvas>
+	<script src="../webgl-utils.js"></script>
+	<script src="main.js"></script>
+	</script>
+	<script id="2d-vertex-shader" type="text/glsl">
+		attribute vec2 a_position;
+		attribute vec2 a_texCoord;
+
+		uniform vec2 u_resolution;
+
+		varying vec2 v_texCoord;
+
+		void main() {
+			// convert rectangle from pixels to 0.0 to 1.0
+			vec2 zeroToOne = a_position / u_resolution;
+
+			vec2 zeroToTwo = zeroToOne * 2.0;
+			vec2 clipSpace = zeroToTwo - 1.0;
+
+			gl_Position = vec4(clipSpace * vec2(1, -1), 0, 1);
+
+			// pass texCoord to fragment shader
+			// GPU will interpolate this value b/w points
+			v_texCoord = a_texCoord;
+		}
+	</script>
+	<script id="2d-fragment-shader" type="text/glsl">
+		precision mediump float;
+
+		// texture
+		uniform sampler2D u_image;
+
+		// texCoords from vertex shader
+		varying vec2 v_texCoord;
+
+		void main() {
+			// look up color from texture
+			gl_FragColor = texture2D(u_image, v_texCoord);
+		}
+	</script>
+</body>
+</html>
