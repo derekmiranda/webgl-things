@@ -1,3 +1,11 @@
+var kernels = {
+  "edgeDetect": [
+    -1, -1, -1,
+    -1,  8, -1,
+    -1, -1, -1,
+  ]
+}
+
 function main() {
   var image = new Image();
   image.src = "leaves.jpg";
@@ -96,6 +104,17 @@ function render(image) {
   // set resolution
   gl.uniform2f(resolutionLocation, gl.canvas.width, gl.canvas.height)
 
+  // set kernel and weight
+  var kernel = kernels.edgeDetect
+
+  var textureSzLocation = gl.getUniformLocation(program, 'u_textureSize')
+  var kernelLocation = gl.getUniformLocation(program, 'u_kernel[0]')
+  var kernelWtLocation = gl.getUniformLocation(program, 'u_kernelWeight')
+
+  gl.uniform2f(textureSzLocation, image.width, image.height)
+  gl.uniform1fv(kernelLocation, kernel)
+  gl.uniform1f(kernelWtLocation, computeKernelWeight(kernel))
+
   // draw rectangle
   var primitiveType = gl.TRIANGLES
   var offset = 0
@@ -104,6 +123,13 @@ function render(image) {
 }
 
 main();
+
+function computeKernelWeight(kernel) {
+  var weight = kernel.reduce(function(sum, num) {
+    return sum + num
+  })
+  return weight <= 0 ? 1 : weight
+}
 
 function setRectangle(gl, x, y, width, height) {
   var x1 = x;
