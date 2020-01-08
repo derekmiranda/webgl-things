@@ -1,10 +1,4 @@
-var kernels = {
-  "edgeDetect": [
-    -1, -1, -1,
-    -1,  8, -1,
-    -1, -1, -1,
-  ]
-}
+var KERNEL_NAME = 'edgeDetect2'
 
 function main() {
   var image = new Image();
@@ -105,7 +99,7 @@ function render(image) {
   gl.uniform2f(resolutionLocation, gl.canvas.width, gl.canvas.height)
 
   // set kernel and weight
-  var kernel = kernels.edgeDetect
+  var kernel = kernels[KERNEL_NAME]
 
   var textureSzLocation = gl.getUniformLocation(program, 'u_textureSize')
   var kernelLocation = gl.getUniformLocation(program, 'u_kernel[0]')
