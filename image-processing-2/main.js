@@ -1,4 +1,10 @@
 var KERNEL_NAME = 'edgeDetect2'
+var EFFECTS_TO_APPLY = [
+  'gaussianBlur3',
+  'gaussianBlur3',
+  'gaussianBlur3',
+  'emboss'
+]
 
 function main() {
   var image = new Image();
@@ -45,26 +51,47 @@ function render(image) {
     gl.STATIC_DRAW
   );
 
-  // create texture
-  var texture = gl.createTexture();
-  gl.bindTexture(gl.TEXTURE_2D, texture);
-
-  // set parameters so we can render any size image
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
-
-  // upload image into texture
+  // create texture and put image in it
+  var origImgTexture = createAndSetupTexture(gl);
   gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image);
 
+  // create 2 textures and attach to framebuffers
+  var textures = []
+  var framebuffers = []
+  for (var i = 0; i < 2; i++) {
+    var texture = createAndSetupTexture(gl);
+    textures.push(texture)
+
+    gl.texImage2D(
+      gl.TEXTURE_2D, 0, gl.RGBA, image.width, image.height, 0,
+      gl.RGBA, gl.UNSIGNED_BYTE, null
+    );
+
+    // create framebuffer
+    var fbo = gl.createFramebuffer()
+    framebuffers.push(fbo)
+    gl.bindFramebuffer(gl.FRAMEBUFFER, fbo)
+
+    // attach texture to it
+    gl.framebufferTexture2D(
+      gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, texture, 0
+    )
+  }
+
+  // look up uniforms
   var resolutionLocation = gl.getUniformLocation(program, "u_resolution");
+  var textureSizeLocation = gl.getUniformLocation(program, "u_textureSize");
+  var kernelLocation = gl.getUniformLocation(program, "u_kernel[0]");
+  var kernelWeightLocation = gl.getUniformLocation(program, "u_kernelWeight");
+  var flipYLocation = gl.getUniformLocation(program, "u_flipY");
 
   webglUtils.resizeCanvasToDisplaySize(gl.canvas);
   gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
   gl.clearColor(0, 0, 0, 0);
   gl.clear(gl.COLOR_BUFFER_BIT);
   gl.useProgram(program);
+
+  gl.uniform2f(textureSizeLocation, image.width, image.height)
 
   // turn on position attribute
   gl.enableVertexAttribArray(positionLocation);
@@ -98,22 +125,30 @@ function render(image) {
   // set resolution
   gl.uniform2f(resolutionLocation, gl.canvas.width, gl.canvas.height)
 
-  // set kernel and weight
-  var kernel = kernels[KERNEL_NAME]
+  // start with orig img
+  gl.bindTexture(gl.TEXTURE_2D, origImgTexture)
 
-  var textureSzLocation = gl.getUniformLocation(program, 'u_textureSize')
-  var kernelLocation = gl.getUniformLocation(program, 'u_kernel[0]')
-  var kernelWtLocation = gl.getUniformLocation(program, 'u_kernelWeight')
+  // don't y flip images while drawing to the textures
+  gl.uniform1f(flipYLocation, 1);
 
-  gl.uniform2f(textureSzLocation, image.width, image.height)
-  gl.uniform1fv(kernelLocation, kernel)
-  gl.uniform1f(kernelWtLocation, computeKernelWeight(kernel))
+  // iterate thru all effects 
+  var count = 0
+  EFFECTS_TO_APPLY.forEach(function(effect) {
+    // set up to draw into one of framebuffers
+    setFramebuffer(gl, framebuffers[count % 2], image.width, image.height, resolutionLocation)
 
-  // draw rectangle
-  var primitiveType = gl.TRIANGLES
-  var offset = 0
-  var count = 6
-  gl.drawArrays(primitiveType, offset, count)
+    drawWithKernel(gl, effect, kernelLocation, kernelWeightLocation)
+
+    // for next draw, use texture we just rendered to
+    gl.bindTexture(gl.TEXTURE_2D, textures[count % 2])
+
+    count++
+  })
+
+  // finally draw result to canvas
+  gl.uniform1f(flipYLocation, -1)
+  setFramebuffer(gl, null, gl.canvas.width, gl.canvas.height, resolutionLocation)
+  drawWithKernel(gl, 'normal', kernelLocation, kernelWeightLocation)
 }
 
 main();
@@ -141,4 +176,37 @@ function setRectangle(gl, x, y, width, height) {
     new Float32Array([x1, y1, x2, y1, x1, y2, x1, y2, x2, y1, x2, y2]),
     gl.STATIC_DRAW
   );
+}
+
+function createAndSetupTexture(gl) {
+  var texture = gl.createTexture()
+  gl.bindTexture(gl.TEXTURE_2D, texture)
+  
+  // set up to render any size image and also working in pixels
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+
+  return texture;
+}
+
+function setFramebuffer(gl, fbo, width, height, resolutionLocation) {
+  // make this the framebuffer to render to
+  gl.bindFramebuffer(gl.FRAMEBUFFER, fbo)
+
+  // tell shader resolution of framebuffer
+  gl.uniform2f(resolutionLocation, width, height)
+
+  // tell WebGL viewport setting needed for framebuffer
+  gl.viewport(0, 0, width, height)
+}
+
+function drawWithKernel(gl, name, kernelLocation, kernelWeightLocation) {
+  // set kernel
+  gl.uniform1fv(kernelLocation, kernels[name])
+  gl.uniform1f(kernelWeightLocation, computeKernelWeight(kernels[name]))
+
+  // draw rectangle
+  gl.drawArrays(gl.TRIANGLES, 0, 6)
 }
