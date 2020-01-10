@@ -97,7 +97,7 @@ function main() {
     gl.uniform4fv(colorLocation, color);
 
     // compute matrices
-    var angleRads = angleDegs * Math.PI / 180
+    var angleRads = (360 - angleDegs) * Math.PI / 180
 
     var translationMat = m3.translation(translation[0], translation[1])
     var rotationMat = m3.rotation(angleRads)
