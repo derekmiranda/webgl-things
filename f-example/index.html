@@ -31,25 +31,19 @@
 			<div id="x"></div>
 			<div id="y"></div>
 			<div id="angle"></div>
-			<div id="scale"></div>
+			<div id="scale-x"></div>
+			<div id="scale-y"></div>
 		</div>
 	</div>
-	<script src="../webgl-lessons-ui.js"></script>
-	<script src="../webgl-utils.js"></script>
 	<script id="2d-vertex-shader" type="text/glsl">
 		attribute vec2 a_position;
 		
 		uniform vec2 u_resolution;
-		uniform vec2 u_translation;
-		uniform vec2 u_rotation;
-		uniform float u_scale;
+		uniform mat3 u_matrix;
 
 		void main() {
-			vec2 scaledOrigPos = a_position * u_scale;
-			vec2 position = vec2(
-				scaledOrigPos.x * u_rotation.y + scaledOrigPos.y * u_rotation.x, 
-				scaledOrigPos.y * u_rotation.y - scaledOrigPos.x * u_rotation.x 
-			) + u_translation;
+			vec2 position = (u_matrix * vec3(a_position, 1)).xy;
+
 			// convert rectangle from pixels to 0.0 to 1.0
 			vec2 zeroToOne = position / u_resolution;
 
@@ -68,6 +62,9 @@
 			gl_FragColor = u_color;
 		}
 	</script>
+	<script src="../webgl-lessons-ui.js"></script>
+	<script src="../webgl-utils.js"></script>
+	<script src="m3.js"></script>
 	<script src="main.js"></script>
 </body>
 

@@ -16,10 +16,8 @@ function main() {
 
   var positionLocation = gl.getAttribLocation(program, 'a_position') 
   
-  var translationLocation = gl.getUniformLocation(program, 'u_translation') 
-  var rotationLocation = gl.getUniformLocation(program, 'u_rotation') 
+  var matrixLocation = gl.getUniformLocation(program, 'u_matrix') 
   var resolutionLocation = gl.getUniformLocation(program, 'u_resolution')
-  var scaleLocation = gl.getUniformLocation(program, 'u_scale')
   var colorLocation = gl.getUniformLocation(program, 'u_color')
 
   var positionBuffer = gl.createBuffer()
@@ -27,8 +25,8 @@ function main() {
   gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer)
 
   var translation = [0, 0]
-  var rotation = [0, 1]
-  var scale = 1
+  var angleDegs = 0
+  var scale = [1, 1]
   var color = [Math.random(), Math.random(), Math.random(), 1]
 
   drawScene()
@@ -36,8 +34,9 @@ function main() {
   // Setup a ui.
   webglLessonsUI.setupSlider("#x", {slide: updatePosition(0), max: gl.canvas.width });
   webglLessonsUI.setupSlider("#y", {slide: updatePosition(1), max: gl.canvas.height});
-  webglLessonsUI.setupSlider("#angle", {slide: updateRotation(), max: 360 });
-  webglLessonsUI.setupSlider("#scale", {slide: updateScale(), min: -5, max: 5, step: 0.01, precision: 2, value: scale });
+  webglLessonsUI.setupSlider("#angle", {slide: updateAngle(), max: 360 });
+  webglLessonsUI.setupSlider("#scale-x", {slide: updateScale(0), min: -5, max: 5, step: 0.01, precision: 2, value: scale[0] });
+  webglLessonsUI.setupSlider("#scale-y", {slide: updateScale(1), min: -5, max: 5, step: 0.01, precision: 2, value: scale[1] });
 
   // vvv functions vvv
   function updatePosition(index) {
@@ -47,19 +46,16 @@ function main() {
     };
   }
 
-  function updateRotation() {
+  function updateAngle() {
     return function(event, ui) {
-      var angleDegs = 360 - ui.value;
-      var angleRads = angleDegs * Math.PI / 180;
-      rotation[0] = Math.sin(angleRads);
-      rotation[1] = Math.cos(angleRads);
+      angleDegs = ui.value
       drawScene()
     }
   }
 
-  function updateScale() {
+  function updateScale(index) {
     return function(event, ui) {
-      scale = ui.value
+      scale[index] = ui.value
       drawScene()
     }
   }
@@ -100,14 +96,18 @@ function main() {
     // set the color
     gl.uniform4fv(colorLocation, color);
 
-    // set the translation
-    gl.uniform2fv(translationLocation, translation);
+    // compute matrices
+    var angleRads = angleDegs * Math.PI / 180
 
-    // set the rotation
-    gl.uniform2fv(rotationLocation, rotation);
+    var translationMat = m3.translation(translation[0], translation[1])
+    var rotationMat = m3.rotation(angleRads)
+    var scaleMat = m3.scale(scale[0], scale[1])
+    var resultMat = [translationMat, rotationMat, scaleMat].reduce(function(result, currMat) {
+      return m3.multiply(result, currMat)
+    }) 
 
-    // set scale
-    gl.uniform1f(scaleLocation, scale)
+    // set transform matrix
+    gl.uniformMatrix3fv(matrixLocation, false, resultMat)
 
     // Draw the geometry.
     var primitiveType = gl.TRIANGLES;
