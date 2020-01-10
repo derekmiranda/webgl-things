@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<meta http-equiv="X-UA-Compatible" content="ie=edge">
+	<title>WebGL Fundamentals</title>
+	<style>
+		@import url("https://webglfundamentals.org/webgl/resources/webgl-tutorials.css");
+		body {
+			margin: 0;
+		}
+
+		canvas {
+			width: 100vw;
+			height: 100vh;
+			display: block;
+		}
+
+		#ui {
+			width: 200px;
+		}
+	</style>
+</head>
+
+<body>
+	<canvas id="canvas"></canvas>
+	<div id="uiContainer">
+		<div id="ui">
+			<div id="x"></div>
+			<div id="y"></div>
+			<div id="width"></div>
+			<div id="height"></div>
+		</div>
+	</div>
+	<script src="../webgl-lessons-ui.js"></script>
+	<script src="../webgl-utils.js"></script>
+	<script id="2d-vertex-shader" type="text/glsl">
+		attribute vec2 a_position;
+
+		uniform vec2 u_resolution;  
+
+		void main() {
+			// convert rectangle from pixels to 0.0 to 1.0
+			vec2 zeroToOne = a_position / u_resolution;
+
+			vec2 zeroToTwo = zeroToOne * 2.0;
+			vec2 clipSpace = zeroToTwo - 1.0;
+
+			gl_Position = vec4(clipSpace * vec2(1, -1), 0, 1);
+		}
+	</script>
+	<script id="2d-fragment-shader" type="text/glsl">
+		precision mediump float;
+
+		uniform vec4 u_color;
+
+		void main() {
+			gl_FragColor = u_color;
+		}
+	</script>
+	<script src="main.js"></script>
+</body>
+
+</html>
