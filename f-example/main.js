@@ -17,6 +17,7 @@ function main() {
   var positionLocation = gl.getAttribLocation(program, 'a_position') 
   
   var translationLocation = gl.getUniformLocation(program, 'u_translation') 
+  var rotationLocation = gl.getUniformLocation(program, 'u_rotation') 
   var resolutionLocation = gl.getUniformLocation(program, 'u_resolution')
   var colorLocation = gl.getUniformLocation(program, 'u_color')
 
@@ -25,6 +26,7 @@ function main() {
   gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer)
 
   var translation = [0, 0]
+  var rotation = [0, 1]
   var color = [Math.random(), Math.random(), Math.random(), 1]
 
   drawScene()
@@ -32,6 +34,7 @@ function main() {
   // Setup a ui.
   webglLessonsUI.setupSlider("#x", {slide: updatePosition(0), max: gl.canvas.width });
   webglLessonsUI.setupSlider("#y", {slide: updatePosition(1), max: gl.canvas.height});
+  webglLessonsUI.setupSlider("#angle", {slide: updateRotation(), max: 360 });
 
   // vvv functions vvv
   function updatePosition(index) {
@@ -39,6 +42,16 @@ function main() {
       translation[index] = ui.value;
       drawScene();
     };
+  }
+
+  function updateRotation() {
+    return function(event, ui) {
+      var angleDegs = 360 - ui.value;
+      var angleRads = angleDegs * Math.PI / 180;
+      rotation[0] = Math.sin(angleRads);
+      rotation[1] = Math.cos(angleRads);
+      drawScene()
+    }
   }
 
   function drawScene() {
@@ -77,8 +90,11 @@ function main() {
     // set the color
     gl.uniform4fv(colorLocation, color);
 
-    // set the resolution
+    // set the translation
     gl.uniform2fv(translationLocation, translation);
+
+    // set the rotation
+    gl.uniform2fv(rotationLocation, rotation);
 
     // Draw the geometry.
     var primitiveType = gl.TRIANGLES;
