@@ -57,5 +57,13 @@ var m3 = {
 			s,  c, 0,
 			0,  0, 1,
 		] 
+	},
+
+	projection: function(width, height) {
+		return [
+      2 / width, 0, 0,
+      0, -2 / height, 0,
+      -1, 1, 1
+    ]
 	}
 }

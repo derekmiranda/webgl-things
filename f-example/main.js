@@ -99,10 +99,15 @@ function main() {
     // compute matrices
     var angleRads = (360 - angleDegs) * Math.PI / 180
 
+    // scales against canvas dimensions
+    // then multiplies by 2 and subtracts by 1 (in clip space units)
+    // so that clip space coords go from -1 -> 1
+    // then flips Y
+    var projectionMat = m3.projection(gl.canvas.width, gl.canvas.height)
     var translationMat = m3.translation(translation[0], translation[1])
     var rotationMat = m3.rotation(angleRads)
     var scaleMat = m3.scale(scale[0], scale[1])
-    var resultMat = [translationMat, rotationMat, scaleMat].reduce(function(result, currMat) {
+    var resultMat = [projectionMat, translationMat, rotationMat, scaleMat].reduce(function(result, currMat) {
       return m3.multiply(result, currMat)
     }) 
 
