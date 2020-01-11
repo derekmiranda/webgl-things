@@ -41,20 +41,27 @@
 	</div>
 	<script id="3d-vertex-shader" type="text/glsl">
 		attribute vec4 a_position;
+		attribute vec4 a_color;
 		
 		uniform mat4 u_matrix;
 
+		varying vec4 v_color;
+
 		void main() {
 			gl_Position = u_matrix * a_position;
+
+			// pass color to fragment shader
+			v_color = a_color;
 		}
 	</script>
 	<script id="3d-fragment-shader" type="text/glsl">
 		precision mediump float;
 
-		uniform vec4 u_color;
+		// from vertex shader
+		varying vec4 v_color;
 
 		void main() {
-			gl_FragColor = u_color;
+			gl_FragColor = v_color;
 		}
 	</script>
 	<script src="../webgl-lessons-ui.js"></script>

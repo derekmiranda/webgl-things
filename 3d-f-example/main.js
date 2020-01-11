@@ -15,11 +15,30 @@ function main() {
   ])
 
   var positionLocation = gl.getAttribLocation(program, 'a_position') 
+  var colorLocation = gl.getAttribLocation(program, 'a_color')
   
   var matrixLocation = gl.getUniformLocation(program, 'u_matrix') 
-  var colorLocation = gl.getUniformLocation(program, 'u_color')
 
   var positionBuffer = gl.createBuffer()
+  var colorBuffer = gl.createBuffer()
+
+  // turn on color attribute
+  gl.enableVertexAttribArray(colorLocation);
+
+  // bind color buffer
+  gl.bindBuffer(gl.ARRAY_BUFFER, colorBuffer)
+
+  // set up color
+  setColors(gl)
+
+  // Tell the attribute how to get data out of colorBuffer (ARRAY_BUFFER)
+  var size = 3;          // 2 components per iteration
+  var type = gl.FLOAT;   // the data is 32bit floats
+  var normalize = false; // don't normalize the data
+  var stride = 0;        // 0 = move forward size * sizeof(type) each iteration to get the next position
+  var offset = 0;        // start at the beginning of the buffer
+  gl.vertexAttribPointer(
+      colorLocation, size, type, normalize, stride, offset);
 
   gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer)
 
@@ -102,9 +121,6 @@ function main() {
     var offset = 0;        // start at the beginning of the buffer
     gl.vertexAttribPointer(
         positionLocation, size, type, normalize, stride, offset);
-        
-    // set the color
-    gl.uniform4fv(colorLocation, color);
 
     // scales against canvas dimensions
     // then multiplies by 2 and subtracts by 1 (in clip space units)
@@ -140,6 +156,19 @@ function main() {
 }
 
 main();
+
+function setColors(gl) {
+  var colorValues = []
+  for (var c = 0; c < 16; c++) {
+    var color = [Math.random(), Math.random(), Math.random()]
+    for (var j = 0; j < 6; j++) {
+      colorValues.push(color[0])
+      colorValues.push(color[1])
+      colorValues.push(color[2])
+    }
+  }
+  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(colorValues), gl.STATIC_DRAW)
+}
 
 // Fill the buffer with the values that define a letter 'F'.
 function setGeometry(gl) {
