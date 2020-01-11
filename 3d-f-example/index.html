@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<meta http-equiv="X-UA-Compatible" content="ie=edge">
+	<title>WebGL Fundamentals</title>
+	<style>
+		@import url("https://webglfundamentals.org/webgl/resources/webgl-tutorials.css");
+		body {
+			margin: 0;
+		}
+
+		canvas {
+			width: 100vw;
+			height: 100vh;
+			display: block;
+		}
+
+		#ui {
+			width: 200px;
+		}
+	</style>
+</head>
+
+<body>
+	<canvas id="canvas"></canvas>
+	<div id="uiContainer">
+		<div id="ui">
+			<div id="x"></div>
+			<div id="y"></div>
+			<div id="z"></div>
+			<div id="rotation-x"></div>
+			<div id="rotation-y"></div>
+			<div id="rotation-z"></div>
+			<div id="scale-x"></div>
+			<div id="scale-y"></div>
+			<div id="scale-z"></div>
+		</div>
+	</div>
+	<script id="3d-vertex-shader" type="text/glsl">
+		attribute vec4 a_position;
+		
+		uniform mat4 u_matrix;
+
+		void main() {
+			gl_Position = u_matrix * a_position;
+		}
+	</script>
+	<script id="3d-fragment-shader" type="text/glsl">
+		precision mediump float;
+
+		uniform vec4 u_color;
+
+		void main() {
+			gl_FragColor = u_color;
+		}
+	</script>
+	<script src="../webgl-lessons-ui.js"></script>
+	<script src="../webgl-utils.js"></script>
+	<script src="m4.js"></script>
+	<script src="main.js"></script>
+</body>
+
+</html>
