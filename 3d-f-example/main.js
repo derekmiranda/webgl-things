@@ -18,7 +18,6 @@ function main() {
   var colorLocation = gl.getAttribLocation(program, 'a_color')
   
   var matrixLocation = gl.getUniformLocation(program, 'u_matrix') 
-  var fudgeLocation = gl.getUniformLocation(program, 'u_fudge') 
 
   var positionBuffer = gl.createBuffer()
   var colorBuffer = gl.createBuffer()
@@ -69,7 +68,7 @@ function main() {
   webglLessonsUI.setupSlider("#scale-x", {value: scale[0], slide: updateScale(0), min: -5, max: 5, step: 0.01, precision: 2, value: scale[0] });
   webglLessonsUI.setupSlider("#scale-y", {value: scale[1], slide: updateScale(1), min: -5, max: 5, step: 0.01, precision: 2, value: scale[1] });
   webglLessonsUI.setupSlider("#scale-z", {value: scale[2], slide: updateScale(2), min: -5, max: 5, step: 0.01, precision: 2, value: scale[2] });
-  webglLessonsUI.setupSlider("#fudge", {value: fudge, slide: updateFudge(), min: -2, max: 2, step: 0.01, precision: 2 });
+  webglLessonsUI.setupSlider("#fudge", {value: fudge, slide: updateFudge(), min: -2, max: 2, step: 0.001, precision: 3 });
 
   // vvv functions vvv
   function updateFudge() {
@@ -107,8 +106,14 @@ function main() {
     // Tell WebGL how to convert from clip space to pixels
     gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
 
-    // Clear the canvas.
-    gl.clear(gl.COLOR_BUFFER_BIT);
+    // Clear color and depth
+    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+
+    // turn on culling
+    gl.enable(gl.CULL_FACE)
+
+    // enable depth buffer
+    gl.enable(gl.DEPTH_TEST)  
 
     // Tell it to use our program (pair of shaders)
     gl.useProgram(program);
@@ -141,23 +146,22 @@ function main() {
     var yRotationMat = m4.yRotation(rotation[1])
     var zRotationMat = m4.zRotation(rotation[2])
     var scaleMat = m4.scale(scale[0], scale[1], scale[2])
+    var fudgeMat = m4.makeZToWMatrix(fudge)
 
     var matrix = [
+      fudgeMat,
       projectionMat,
       translationMat,
       xRotationMat,
       yRotationMat,
       zRotationMat,
-      scaleMat
+      scaleMat,
     ].reduce(function(result, currMat) {
       return m4.multiply(result, currMat)
     })
 
     // set transform matrix
     gl.uniformMatrix4fv(matrixLocation, false, matrix)
-    
-    // set fudge
-    gl.uniform1f(fudgeLocation, fudge)
 
     // Draw the geometry.
     var primitiveType = gl.TRIANGLES;
@@ -188,28 +192,28 @@ function setGeometry(gl) {
       gl.ARRAY_BUFFER,
       new Float32Array([
           // left column front
-            0,   0,  0,
-           30,   0,  0,
-            0, 150,  0,
-            0, 150,  0,
-           30,   0,  0,
-           30, 150,  0,
+          0,   0,  0,
+          0, 150,  0,
+          30,   0,  0,
+          0, 150,  0,
+          30, 150,  0,
+          30,   0,  0,
 
           // top rung front
-           30,   0,  0,
+          30,   0,  0,
+          30,  30,  0,
           100,   0,  0,
-           30,  30,  0,
-           30,  30,  0,
-          100,   0,  0,
+          30,  30,  0,
           100,  30,  0,
+          100,   0,  0,
 
           // middle rung front
-           30,  60,  0,
-           67,  60,  0,
-           30,  90,  0,
-           30,  90,  0,
-           67,  60,  0,
-           67,  90,  0,
+          30,  60,  0,
+          30,  90,  0,
+          67,  60,  0,
+          30,  90,  0,
+          67,  90,  0,
+          67,  60,  0,
 
           // left column back
             0,   0,  30,
@@ -261,27 +265,27 @@ function setGeometry(gl) {
 
           // between top rung and middle
           30,   30,   0,
+          30,   60,  30,
           30,   30,  30,
-          30,   60,  30,
           30,   30,   0,
-          30,   60,  30,
           30,   60,   0,
+          30,   60,  30,
 
           // top of middle rung
           30,   60,   0,
+          67,   60,  30,
           30,   60,  30,
-          67,   60,  30,
           30,   60,   0,
-          67,   60,  30,
           67,   60,   0,
+          67,   60,  30,
 
           // right of middle rung
           67,   60,   0,
+          67,   90,  30,
           67,   60,  30,
-          67,   90,  30,
           67,   60,   0,
-          67,   90,  30,
           67,   90,   0,
+          67,   90,  30,
 
           // bottom of middle rung.
           30,   90,   0,
@@ -293,11 +297,11 @@ function setGeometry(gl) {
 
           // right of bottom
           30,   90,   0,
+          30,  150,  30,
           30,   90,  30,
-          30,  150,  30,
           30,   90,   0,
-          30,  150,  30,
           30,  150,   0,
+          30,  150,  30,
 
           // bottom
           0,   150,   0,
