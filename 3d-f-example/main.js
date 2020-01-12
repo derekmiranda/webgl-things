@@ -22,6 +22,12 @@ function main() {
   var positionBuffer = gl.createBuffer()
   var colorBuffer = gl.createBuffer()
 
+  // turn on culling
+  gl.enable(gl.CULL_FACE)
+
+  // enable depth buffer
+  gl.enable(gl.DEPTH_TEST)
+
   // turn on color attribute
   gl.enableVertexAttribArray(colorLocation);
 
@@ -98,8 +104,8 @@ function main() {
     // Tell WebGL how to convert from clip space to pixels
     gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
 
-    // Clear the canvas.
-    gl.clear(gl.COLOR_BUFFER_BIT);
+    // Clear color and depth buffer
+    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
     // Tell it to use our program (pair of shaders)
     gl.useProgram(program);
@@ -171,33 +177,34 @@ function setColors(gl) {
 }
 
 // Fill the buffer with the values that define a letter 'F'.
+// Fill the buffer with the values that define a letter 'F'.
 function setGeometry(gl) {
   gl.bufferData(
       gl.ARRAY_BUFFER,
       new Float32Array([
           // left column front
-            0,   0,  0,
-           30,   0,  0,
-            0, 150,  0,
-            0, 150,  0,
-           30,   0,  0,
-           30, 150,  0,
+          0,   0,  0,
+          0, 150,  0,
+          30,   0,  0,
+          0, 150,  0,
+          30, 150,  0,
+          30,   0,  0,
 
           // top rung front
-           30,   0,  0,
+          30,   0,  0,
+          30,  30,  0,
           100,   0,  0,
-           30,  30,  0,
-           30,  30,  0,
-          100,   0,  0,
+          30,  30,  0,
           100,  30,  0,
+          100,   0,  0,
 
           // middle rung front
-           30,  60,  0,
-           67,  60,  0,
-           30,  90,  0,
-           30,  90,  0,
-           67,  60,  0,
-           67,  90,  0,
+          30,  60,  0,
+          30,  90,  0,
+          67,  60,  0,
+          30,  90,  0,
+          67,  90,  0,
+          67,  60,  0,
 
           // left column back
             0,   0,  30,
@@ -249,27 +256,27 @@ function setGeometry(gl) {
 
           // between top rung and middle
           30,   30,   0,
+          30,   60,  30,
           30,   30,  30,
-          30,   60,  30,
           30,   30,   0,
-          30,   60,  30,
           30,   60,   0,
+          30,   60,  30,
 
           // top of middle rung
           30,   60,   0,
+          67,   60,  30,
           30,   60,  30,
-          67,   60,  30,
           30,   60,   0,
-          67,   60,  30,
           67,   60,   0,
+          67,   60,  30,
 
           // right of middle rung
           67,   60,   0,
+          67,   90,  30,
           67,   60,  30,
-          67,   90,  30,
           67,   60,   0,
-          67,   90,  30,
           67,   90,   0,
+          67,   90,  30,
 
           // bottom of middle rung.
           30,   90,   0,
@@ -281,11 +288,11 @@ function setGeometry(gl) {
 
           // right of bottom
           30,   90,   0,
+          30,  150,  30,
           30,   90,  30,
-          30,  150,  30,
           30,   90,   0,
-          30,  150,  30,
           30,  150,   0,
+          30,  150,  30,
 
           // bottom
           0,   150,   0,
