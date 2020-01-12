@@ -28,6 +28,7 @@
 	<canvas id="canvas"></canvas>
 	<div id="uiContainer">
 		<div id="ui">
+			<div id="fudge"></div>
 			<div id="x"></div>
 			<div id="y"></div>
 			<div id="z"></div>
@@ -43,12 +44,17 @@
 		attribute vec4 a_position;
 		attribute vec4 a_color;
 		
+		uniform float u_fudge;
 		uniform mat4 u_matrix;
 
 		varying vec4 v_color;
 
 		void main() {
-			gl_Position = u_matrix * a_position;
+			vec4 position = u_matrix * a_position;
+
+			float zToDivideBy = 1.0 + position.z * u_fudge;
+			
+			gl_Position = vec4(position.xyz, zToDivideBy);
 
 			// pass color to fragment shader
 			v_color = a_color;
