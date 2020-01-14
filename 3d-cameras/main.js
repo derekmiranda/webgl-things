@@ -69,20 +69,12 @@ function main() {
   webglLessonsUI.setupSlider("#scale-x", {value: scale[0], slide: updateScale(0), min: -5, max: 5, step: 0.01, precision: 2, value: scale[0] });
   webglLessonsUI.setupSlider("#scale-y", {value: scale[1], slide: updateScale(1), min: -5, max: 5, step: 0.01, precision: 2, value: scale[1] });
   webglLessonsUI.setupSlider("#scale-z", {value: scale[2], slide: updateScale(2), min: -5, max: 5, step: 0.01, precision: 2, value: scale[2] });
-  webglLessonsUI.setupSlider("#fudge", {value: fudge, slide: updateFudge(), max: 2, step: 0.001, precision: 3 });
   webglLessonsUI.setupSlider("#fov", {value: radToDeg(fovRads), slide: updateFOV(), min: 1, max: 179, });
 
   // vvv functions vvv
   function updateFOV() {
     return function(event, ui) {
       fovRads = degToRad(ui.value)
-      drawScene()
-    }
-  }
-
-  function updateFudge() {
-    return function(event, ui) {
-      fudge = ui.value
       drawScene()
     }
   }
@@ -155,10 +147,8 @@ function main() {
     var yRotationMat = m4.yRotation(rotation[1])
     var zRotationMat = m4.zRotation(rotation[2])
     var scaleMat = m4.scale(scale[0], scale[1], scale[2])
-    var fudgeMat = m4.makeZToWMatrix(fudge)
 
     var matrix = [
-      fudgeMat,
       projectionMat,
       translationMat,
       xRotationMat,
