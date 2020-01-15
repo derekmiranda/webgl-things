@@ -55,11 +55,12 @@ function main() {
   var translation = [-150, 0, -360];
   var rotation = [degToRad(190), degToRad(40), degToRad(320)];
   var scale = [1, 1, 1];
-  var rotationSpeed = 1.2 
+  var rotationSpeed = 1.2 // = radians / sec
+  var then = 0
 
   requestAnimationFrame(drawScene)
 
-  function drawScene() {
+  function drawScene(now) {
     webglUtils.resizeCanvasToDisplaySize(gl.canvas);
 
     // Tell WebGL how to convert from clip space to pixels
@@ -99,8 +100,12 @@ function main() {
     var zNear = 1
     var zFar = 2000
 
+    // convert now to secs
+    now *= 0.001
     // update rotation
-    rotation[1] += rotationSpeed / 60.0
+    rotation[1] += rotationSpeed * (now - then)
+    // update then
+    then = now
 
     var projectionMat = m4.perspective(fovRads, aspect, zNear, zFar)
     var translationMat = m4.translation(translation[0], translation[1], translation[2])
