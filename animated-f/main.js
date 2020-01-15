@@ -55,59 +55,9 @@ function main() {
   var translation = [-150, 0, -360];
   var rotation = [degToRad(190), degToRad(40), degToRad(320)];
   var scale = [1, 1, 1];
-  var fudge = 1
+  var rotationSpeed = 1.2 
 
-  drawScene()
-
-  // Setup a ui.
-  webglLessonsUI.setupSlider("#x", {value: translation[0], slide: updatePosition(0), min: -200, max: 200 });
-  webglLessonsUI.setupSlider("#y", {value: translation[1], slide: updatePosition(1), min: -200, max: 200 });
-  webglLessonsUI.setupSlider("#z", {value: translation[2], slide: updatePosition(2), min: -1000, max: 0 });
-  webglLessonsUI.setupSlider("#rotation-x", {value: radToDeg(rotation[0]), slide: updateAngle(0), max: 360 });
-  webglLessonsUI.setupSlider("#rotation-y", {value: radToDeg(rotation[1]), slide: updateAngle(1), max: 360 });
-  webglLessonsUI.setupSlider("#rotation-z", {value: radToDeg(rotation[2]), slide: updateAngle(2), max: 360 });
-  webglLessonsUI.setupSlider("#scale-x", {value: scale[0], slide: updateScale(0), min: -5, max: 5, step: 0.01, precision: 2, value: scale[0] });
-  webglLessonsUI.setupSlider("#scale-y", {value: scale[1], slide: updateScale(1), min: -5, max: 5, step: 0.01, precision: 2, value: scale[1] });
-  webglLessonsUI.setupSlider("#scale-z", {value: scale[2], slide: updateScale(2), min: -5, max: 5, step: 0.01, precision: 2, value: scale[2] });
-  webglLessonsUI.setupSlider("#fudge", {value: fudge, slide: updateFudge(), max: 2, step: 0.001, precision: 3 });
-  webglLessonsUI.setupSlider("#fov", {value: radToDeg(fovRads), slide: updateFOV(), min: 1, max: 179, });
-
-  // vvv functions vvv
-  function updateFOV() {
-    return function(event, ui) {
-      fovRads = degToRad(ui.value)
-      drawScene()
-    }
-  }
-
-  function updateFudge() {
-    return function(event, ui) {
-      fudge = ui.value
-      drawScene()
-    }
-  }
-
-  function updatePosition(index) {
-    return function(event, ui) {
-      translation[index] = ui.value;
-      drawScene();
-    };
-  }
-
-  function updateAngle(index) {
-    return function(event, ui) {
-      var angleRads = degToRad(ui.value)
-      rotation[index] = angleRads
-      drawScene()
-    }
-  }
-
-  function updateScale(index) {
-    return function(event, ui) {
-      scale[index] = ui.value
-      drawScene()
-    }
-  }
+  requestAnimationFrame(drawScene)
 
   function drawScene() {
     webglUtils.resizeCanvasToDisplaySize(gl.canvas);
@@ -149,16 +99,17 @@ function main() {
     var zNear = 1
     var zFar = 2000
 
+    // update rotation
+    rotation[1] += rotationSpeed / 60.0
+
     var projectionMat = m4.perspective(fovRads, aspect, zNear, zFar)
     var translationMat = m4.translation(translation[0], translation[1], translation[2])
     var xRotationMat = m4.xRotation(rotation[0])
     var yRotationMat = m4.yRotation(rotation[1])
     var zRotationMat = m4.zRotation(rotation[2])
     var scaleMat = m4.scale(scale[0], scale[1], scale[2])
-    var fudgeMat = m4.makeZToWMatrix(fudge)
-
+    
     var matrix = [
-      fudgeMat,
       projectionMat,
       translationMat,
       xRotationMat,
@@ -177,6 +128,8 @@ function main() {
     var offset = 0;
     var count = 16 * 6;
     gl.drawArrays(primitiveType, offset, count);
+
+    requestAnimationFrame(drawScene)
   }
 }
 
