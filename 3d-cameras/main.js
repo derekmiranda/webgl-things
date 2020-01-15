@@ -39,8 +39,23 @@ function main() {
   var offset = 0;        // start at the beginning of the buffer
   gl.vertexAttribPointer(
       colorLocation, size, type, normalize, stride, offset);
+    
+  // Turn on the attribute
+  gl.enableVertexAttribArray(positionLocation);
 
   gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer)
+
+  // Tell the attribute how to get data out of positionBuffer (ARRAY_BUFFER)
+  var size = 3;          // 2 components per iteration
+  var type = gl.FLOAT;   // the data is 32bit floats
+  var normalize = false; // don't normalize the data
+  var stride = 0;        // 0 = move forward size * sizeof(type) each iteration to get the next position
+  var offset = 0;        // start at the beginning of the buffer
+  gl.vertexAttribPointer(
+      positionLocation, size, type, normalize, stride, offset);
+
+  // Setup a rectangle
+  setGeometry(gl);
 
   function degToRad(degs) {
     return degs * Math.PI / 180
@@ -85,35 +100,35 @@ function main() {
     // Tell it to use our program (pair of shaders)
     gl.useProgram(program);
 
-    // Turn on the attribute
-    gl.enableVertexAttribArray(positionLocation);
-
-    // Bind the position buffer.
-    gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
-
-    // Setup a rectangle
-    setGeometry(gl);
-
-    // Tell the attribute how to get data out of positionBuffer (ARRAY_BUFFER)
-    var size = 3;          // 2 components per iteration
-    var type = gl.FLOAT;   // the data is 32bit floats
-    var normalize = false; // don't normalize the data
-    var stride = 0;        // 0 = move forward size * sizeof(type) each iteration to get the next position
-    var offset = 0;        // start at the beginning of the buffer
-    gl.vertexAttribPointer(
-        positionLocation, size, type, normalize, stride, offset);
-
     var aspect = gl.canvas.clientWidth / gl.canvas.clientHeight
     var zNear = 1
     var zFar = 2000
 
+    // compute position of first F
+    var fPos = [radius, 0, 0]
+
+    // initial camera positioning
     var camMat = m4.yRotation(camAngleRads)
-    camMat = m4.multiply(
-      camMat,
-      m4.translation(0, 0, radius * 1.5)
-    )
+    camMat = m4.translate(camMat, 0, 0, radius * 1.5)
+
+    // get camera position from camera matrix above
+    // camera position = W component of camera matrix
+    // X, Y, Z = represent 3D rotation of camera
+    // W = represents translation in 3D space
+    var camPos = [
+      camMat[12],
+      camMat[13],
+      camMat[14]
+    ]
+
+    var up = [0, 1, 0]
+
+    // compute camera's matrix using look at
+    camMat = m4.lookAt(camPos, fPos, up)
 
     var viewMat = m4.inverse(camMat)
+
+    // compute projection matrix
     var projectionMat = m4.multiply(
       m4.perspective(fovRads, aspect, zNear, zFar),
       viewMat

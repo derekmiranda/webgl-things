@@ -239,7 +239,7 @@ var m4 = {
   },
 
   lookAt: function(cameraPosition, target, up) {
-    var zAxis = normalize(subtractVecs(cameraPosition - target))
+    var zAxis = normalize(subtractVecs(cameraPosition, target))
     var xAxis = normalize(cross(up, zAxis))
     var yAxis = normalize(cross(zAxis, xAxis))
 
