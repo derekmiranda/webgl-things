@@ -1,5 +1,3 @@
-var KERNEL_NAME = 'edgeDetect2'
-
 function main() {
   var canvas = document.getElementById('canvas') 
   var gl = canvas.getContext('webgl')
@@ -15,32 +13,36 @@ function main() {
   ])
 
   var positionLocation = gl.getAttribLocation(program, 'a_position') 
-  var colorLocation = gl.getAttribLocation(program, 'a_color')
+  var texcoordLocation = gl.getAttribLocation(program, 'a_texcoord') 
   
   var matrixLocation = gl.getUniformLocation(program, 'u_matrix') 
 
   var positionBuffer = gl.createBuffer()
-  var colorBuffer = gl.createBuffer()
+  var texBuffer = gl.createBuffer()
 
-  // turn on color attribute
-  gl.enableVertexAttribArray(colorLocation);
+  gl.bindBuffer(gl.ARRAY_BUFFER, texBuffer)
+  gl.enableVertexAttribArray(texcoordLocation)
 
-  // bind color buffer
-  gl.bindBuffer(gl.ARRAY_BUFFER, colorBuffer)
+  // supply texcoords as floats
+  gl.vertexAttribPointer(texcoordLocation, 2, gl.FLOAT, false, 0, 0)
 
-  // set up color
-  setColors(gl)
+  setTexcoords(gl)
 
-  // Tell the attribute how to get data out of colorBuffer (ARRAY_BUFFER)
-  var size = 3;          // 2 components per iteration
-  var type = gl.FLOAT;   // the data is 32bit floats
-  var normalize = false; // don't normalize the data
-  var stride = 0;        // 0 = move forward size * sizeof(type) each iteration to get the next position
-  var offset = 0;        // start at the beginning of the buffer
-  gl.vertexAttribPointer(
-      colorLocation, size, type, normalize, stride, offset);
+  var texture = gl.createTexture()
+  gl.bindTexture(gl.TEXTURE_2D, texture)
 
-  gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer)
+  // fill w/ temporary 1x1 blue pixel
+  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE,
+    new Uint8Array([0,0,255,255]))
+
+  // load image
+  var image = new Image()
+  image.src = 'f-texture.png'
+  image.addEventListener('load', function() {
+    gl.bindTexture(gl.TEXTURE_2D, texture)
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image)
+    gl.generateMipmap(gl.TEXTURE_2D)
+  })
 
   function degToRad(degs) {
     return degs * Math.PI / 180
@@ -141,17 +143,138 @@ function main() {
 
 main();
 
-function setColors(gl) {
-  var colorValues = []
-  for (var c = 0; c < 16; c++) {
-    var color = [Math.random(), Math.random(), Math.random()]
-    for (var j = 0; j < 6; j++) {
-      colorValues.push(color[0])
-      colorValues.push(color[1])
-      colorValues.push(color[2])
-    }
-  }
-  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(colorValues), gl.STATIC_DRAW)
+function setTexcoords(gl) {
+  gl.bufferData(
+      gl.ARRAY_BUFFER,
+      new Float32Array([
+        // left column front
+        0, 0,
+        0, 1,
+        1, 0,
+        0, 1,
+        1, 1,
+        1, 0,
+
+        // top rung front
+        0, 0,
+        0, 1,
+        1, 0,
+        0, 1,
+        1, 1,
+        1, 0,
+
+        // middle rung front
+        0, 0,
+        0, 1,
+        1, 0,
+        0, 1,
+        1, 1,
+        1, 0,
+
+        // left column back
+        0, 0,
+        1, 0,
+        0, 1,
+        0, 1,
+        1, 0,
+        1, 1,
+
+        // top rung back
+        0, 0,
+        1, 0,
+        0, 1,
+        0, 1,
+        1, 0,
+        1, 1,
+
+        // middle rung back
+        0, 0,
+        1, 0,
+        0, 1,
+        0, 1,
+        1, 0,
+        1, 1,
+
+        // top
+        0, 0,
+        1, 0,
+        1, 1,
+        0, 0,
+        1, 1,
+        0, 1,
+
+        // top rung right
+        0, 0,
+        1, 0,
+        1, 1,
+        0, 0,
+        1, 1,
+        0, 1,
+
+        // under top rung
+        0, 0,
+        0, 1,
+        1, 1,
+        0, 0,
+        1, 1,
+        1, 0,
+
+        // between top rung and middle
+        0, 0,
+        1, 1,
+        0, 1,
+        0, 0,
+        1, 0,
+        1, 1,
+
+        // top of middle rung
+        0, 0,
+        1, 1,
+        0, 1,
+        0, 0,
+        1, 0,
+        1, 1,
+
+        // right of middle rung
+        0, 0,
+        1, 1,
+        0, 1,
+        0, 0,
+        1, 0,
+        1, 1,
+
+        // bottom of middle rung.
+        0, 0,
+        0, 1,
+        1, 1,
+        0, 0,
+        1, 1,
+        1, 0,
+
+        // right of bottom
+        0, 0,
+        1, 1,
+        0, 1,
+        0, 0,
+        1, 0,
+        1, 1,
+
+        // bottom
+        0, 0,
+        0, 1,
+        1, 1,
+        0, 0,
+        1, 1,
+        1, 0,
+
+        // left side
+        0, 0,
+        0, 1,
+        1, 1,
+        0, 0,
+        1, 1,
+        1, 0]),
+      gl.STATIC_DRAW);
 }
 
 // Fill the buffer with the values that define a letter 'F'.
