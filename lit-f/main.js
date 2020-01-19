@@ -39,8 +39,23 @@ function main() {
   var offset = 0;        // start at the beginning of the buffer
   gl.vertexAttribPointer(
       colorLocation, size, type, normalize, stride, offset);
+    
+  // Turn on the attribute
+  gl.enableVertexAttribArray(positionLocation);
 
   gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer)
+
+  // Tell the attribute how to get data out of positionBuffer (ARRAY_BUFFER)
+  var size = 3;          // 2 components per iteration
+  var type = gl.FLOAT;   // the data is 32bit floats
+  var normalize = false; // don't normalize the data
+  var stride = 0;        // 0 = move forward size * sizeof(type) each iteration to get the next position
+  var offset = 0;        // start at the beginning of the buffer
+  gl.vertexAttribPointer(
+      positionLocation, size, type, normalize, stride, offset);
+
+  // Setup a rectangle
+  setGeometry(gl);
 
   function degToRad(degs) {
     return degs * Math.PI / 180
@@ -51,62 +66,20 @@ function main() {
   }
 
   // transform vars
+  var numFs = 5
+  var radius = 200
+  var camAngleRads = 0
   var fovRads = degToRad(60)
-  var translation = [-150, 0, -360];
-  var rotation = [degToRad(190), degToRad(40), degToRad(320)];
-  var scale = [1, 1, 1];
-  var fudge = 1
 
   drawScene()
 
   // Setup a ui.
-  webglLessonsUI.setupSlider("#x", {value: translation[0], slide: updatePosition(0), min: -200, max: 200 });
-  webglLessonsUI.setupSlider("#y", {value: translation[1], slide: updatePosition(1), min: -200, max: 200 });
-  webglLessonsUI.setupSlider("#z", {value: translation[2], slide: updatePosition(2), min: -1000, max: 0 });
-  webglLessonsUI.setupSlider("#rotation-x", {value: radToDeg(rotation[0]), slide: updateAngle(0), max: 360 });
-  webglLessonsUI.setupSlider("#rotation-y", {value: radToDeg(rotation[1]), slide: updateAngle(1), max: 360 });
-  webglLessonsUI.setupSlider("#rotation-z", {value: radToDeg(rotation[2]), slide: updateAngle(2), max: 360 });
-  webglLessonsUI.setupSlider("#scale-x", {value: scale[0], slide: updateScale(0), min: -5, max: 5, step: 0.01, precision: 2, value: scale[0] });
-  webglLessonsUI.setupSlider("#scale-y", {value: scale[1], slide: updateScale(1), min: -5, max: 5, step: 0.01, precision: 2, value: scale[1] });
-  webglLessonsUI.setupSlider("#scale-z", {value: scale[2], slide: updateScale(2), min: -5, max: 5, step: 0.01, precision: 2, value: scale[2] });
-  webglLessonsUI.setupSlider("#fudge", {value: fudge, slide: updateFudge(), max: 2, step: 0.001, precision: 3 });
-  webglLessonsUI.setupSlider("#fov", {value: radToDeg(fovRads), slide: updateFOV(), min: 1, max: 179, });
+  webglLessonsUI.setupSlider("#cameraAngle", {value: camAngleRads, slide: updateCamAngle, max: 360 });
 
   // vvv functions vvv
-  function updateFOV() {
-    return function(event, ui) {
-      fovRads = degToRad(ui.value)
-      drawScene()
-    }
-  }
-
-  function updateFudge() {
-    return function(event, ui) {
-      fudge = ui.value
-      drawScene()
-    }
-  }
-
-  function updatePosition(index) {
-    return function(event, ui) {
-      translation[index] = ui.value;
-      drawScene();
-    };
-  }
-
-  function updateAngle(index) {
-    return function(event, ui) {
-      var angleRads = degToRad(ui.value)
-      rotation[index] = angleRads
-      drawScene()
-    }
-  }
-
-  function updateScale(index) {
-    return function(event, ui) {
-      scale[index] = ui.value
-      drawScene()
-    }
+  function updateCamAngle(event, ui) {
+    camAngleRads = degToRad(ui.value)
+    drawScene()
   }
 
   function drawScene() {
@@ -127,56 +100,57 @@ function main() {
     // Tell it to use our program (pair of shaders)
     gl.useProgram(program);
 
-    // Turn on the attribute
-    gl.enableVertexAttribArray(positionLocation);
-
-    // Bind the position buffer.
-    gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
-
-    // Setup a rectangle
-    setGeometry(gl);
-
-    // Tell the attribute how to get data out of positionBuffer (ARRAY_BUFFER)
-    var size = 3;          // 2 components per iteration
-    var type = gl.FLOAT;   // the data is 32bit floats
-    var normalize = false; // don't normalize the data
-    var stride = 0;        // 0 = move forward size * sizeof(type) each iteration to get the next position
-    var offset = 0;        // start at the beginning of the buffer
-    gl.vertexAttribPointer(
-        positionLocation, size, type, normalize, stride, offset);
-
     var aspect = gl.canvas.clientWidth / gl.canvas.clientHeight
     var zNear = 1
     var zFar = 2000
 
-    var projectionMat = m4.perspective(fovRads, aspect, zNear, zFar)
-    var translationMat = m4.translation(translation[0], translation[1], translation[2])
-    var xRotationMat = m4.xRotation(rotation[0])
-    var yRotationMat = m4.yRotation(rotation[1])
-    var zRotationMat = m4.zRotation(rotation[2])
-    var scaleMat = m4.scale(scale[0], scale[1], scale[2])
-    var fudgeMat = m4.makeZToWMatrix(fudge)
+    // compute position of first F
+    var fPos = [radius, 0, 0]
 
-    var matrix = [
-      fudgeMat,
-      projectionMat,
-      translationMat,
-      xRotationMat,
-      yRotationMat,
-      zRotationMat,
-      scaleMat,
-    ].reduce(function(result, currMat) {
-      return m4.multiply(result, currMat)
-    })
+    // initial camera positioning
+    var camMat = m4.yRotation(camAngleRads)
+    camMat = m4.translate(camMat, 0, 0, radius * 1.5)
 
-    // set transform matrix
-    gl.uniformMatrix4fv(matrixLocation, false, matrix)
+    // get camera position from camera matrix above
+    // camera position = W component of camera matrix
+    // X, Y, Z = represent 3D rotation of camera
+    // W = represents translation in 3D space
+    var camPos = [
+      camMat[12],
+      camMat[13],
+      camMat[14]
+    ]
 
-    // Draw the geometry.
-    var primitiveType = gl.TRIANGLES;
-    var offset = 0;
-    var count = 16 * 6;
-    gl.drawArrays(primitiveType, offset, count);
+    var up = [0, 1, 0]
+
+    // compute camera's matrix using look at
+    camMat = m4.lookAt(camPos, fPos, up)
+
+    var viewMat = m4.inverse(camMat)
+
+    // compute projection matrix
+    var projectionMat = m4.multiply(
+      m4.perspective(fovRads, aspect, zNear, zFar),
+      viewMat
+    )
+
+    for (var i = 0; i < numFs; ++i) {
+      var angle = i * Math.PI * 2 / numFs
+      var x = Math.cos(angle) * radius
+      var y = Math.sin(angle) * radius
+
+      var matrix = m4.multiply(
+        projectionMat,
+        m4.translation(x, 0, y)
+      )
+
+      gl.uniformMatrix4fv(matrixLocation, false, matrix)
+
+      var primitiveType = gl.TRIANGLES
+      var offset = 0
+      var count = 16 * 6
+      gl.drawArrays(primitiveType, offset, count)
+    }
   }
 }
 
@@ -197,9 +171,7 @@ function setColors(gl) {
 
 // Fill the buffer with the values that define a letter 'F'.
 function setGeometry(gl) {
-  gl.bufferData(
-      gl.ARRAY_BUFFER,
-      new Float32Array([
+  var positions = new Float32Array([
           // left column front
           0,   0,  0,
           0, 150,  0,
@@ -326,6 +298,24 @@ function setGeometry(gl) {
           0, 150,  30,
           0,   0,   0,
           0, 150,  30,
-          0, 150,   0]),
-      gl.STATIC_DRAW);
+          0, 150,   0]);
+
+  // Center the F around the origin and Flip it around. We do this because
+  // we're in 3D now with and +Y is up where as before when we started with 2D
+  // we had +Y as down.
+
+  // We could do by changing all the values above but I'm lazy.
+  // We could also do it with a matrix at draw time but you should
+  // never do stuff at draw time if you can do it at init time.
+  var matrix = m4.xRotation(Math.PI);
+  matrix = m4.translate(matrix, -50, -75, -15);
+
+  for (var ii = 0; ii < positions.length; ii += 3) {
+    var vector = m4.vectorMultiply([positions[ii + 0], positions[ii + 1], positions[ii + 2], 1], matrix);
+    positions[ii + 0] = vector[0];
+    positions[ii + 1] = vector[1];
+    positions[ii + 2] = vector[2];
+  }
+
+  gl.bufferData(gl.ARRAY_BUFFER, positions, gl.STATIC_DRAW);
 }
