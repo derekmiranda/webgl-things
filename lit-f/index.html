@@ -1,65 +1,80 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<meta http-equiv="X-UA-Compatible" content="ie=edge">
 	<title>WebGL Fundamentals</title>
 	<style>
-		@import url("https://webglfundamentals.org/webgl/resources/webgl-tutorials.css");
-		body {
-			margin: 0;
-		}
-
-		canvas {
-			width: 100vw;
-			height: 100vh;
-			display: block;
-		}
-
-		#ui {
-			width: 200px;
-		}
+@import url("https://webglfundamentals.org/webgl/resources/webgl-tutorials.css");
+body {
+  margin: 0;
+}
+canvas {
+  width: 100vw;
+  height: 100vh;
+  display: block;
+}
 	</style>
 </head>
-
 <body>
-	<canvas id="canvas"></canvas>
-	<div id="uiContainer">
-		<div id="ui">
-			<div id="cameraAngle"></div>
-		</div>
-	</div>
-	<script id="3d-vertex-shader" type="text/glsl">
-		attribute vec4 a_position;
-		attribute vec4 a_color;
-		
-		uniform mat4 u_matrix;
+<canvas id="canvas"></canvas>
+<div id="uiContainer">
+  <div id="ui">
+    <div id="fRotation"></div>
+  </div>
+</div>
+<!-- vertex shader -->
+<script  id="3d-vertex-shader" type="x-shader/x-vertex">
+attribute vec4 a_position;
+attribute vec3 a_normal;
 
-		varying vec4 v_color;
+uniform mat4 u_matrix;
 
-		void main() {
-			gl_Position = u_matrix * a_position;
+varying vec3 v_normal;
 
-			// pass color to fragment shader
-			v_color = a_color;
-		}
-	</script>
-	<script id="3d-fragment-shader" type="text/glsl">
-		precision mediump float;
+void main() {
+  // Multiply the position by the matrix.
+  gl_Position = u_matrix * a_position;
 
-		// from vertex shader
-		varying vec4 v_color;
+  // Pass the normal to the fragment shader
+  v_normal = a_normal;
+}
+</script>
+<!-- fragment shader -->
+<script  id="3d-fragment-shader" type="x-shader/x-fragment">
+precision mediump float;
 
-		void main() {
-			gl_FragColor = v_color;
-		}
-	</script>
-	<script src="../webgl-lessons-ui.js"></script>
-	<script src="../webgl-utils.js"></script>
-	<script src="m4.js"></script>
-	<script src="main.js"></script>
+// Passed in from the vertex shader.
+varying vec3 v_normal;
+
+uniform vec3 u_reverseLightDirection;
+uniform vec4 u_color;
+
+void main() {
+  // because v_normal is a varying it's interpolated
+  // so it will not be a unit vector. Normalizing it
+  // will make it a unit vector again
+  vec3 normal = normalize(v_normal);
+
+  float light = dot(normal, u_reverseLightDirection);
+
+  gl_FragColor = u_color;
+
+  // Lets multiply just the color portion (not the alpha)
+  // by the light
+  gl_FragColor.rgb *= light;
+}
+</script><!--
+for most samples webgl-utils only provides shader compiling/linking and
+canvas resizing because why clutter the examples with code that's the same in every sample.
+See http://webglfundamentals.org/webgl/lessons/webgl-boilerplate.html
+and http://webglfundamentals.org/webgl/lessons/webgl-resizing-the-canvas.html
+for webgl-utils, m3, m4, and webgl-lessons-ui.
+-->
+<script src="https://webglfundamentals.org/webgl/resources/webgl-utils.js"></script>
+<script src="https://webglfundamentals.org/webgl/resources/webgl-lessons-ui.js"></script>
+<script src="https://webglfundamentals.org/webgl/resources/m4.js"></script>
+<script src="main.js"></script>
 </body>
-
 </html>
