@@ -19,9 +19,10 @@ function main() {
   // lookup uniforms
   var worldViewProjectionLocation = gl.getUniformLocation(program, "u_worldViewProjection");
   var worldInverseTransposeLocation = gl.getUniformLocation(program, "u_worldInverseTranspose");
+  var worldLocation = gl.getUniformLocation(program, "u_world");
   var colorLocation = gl.getUniformLocation(program, "u_color");
-  var reverseLightDirectionLocation =
-      gl.getUniformLocation(program, "u_reverseLightDirection");
+  var lightWorldPositionLocation =
+      gl.getUniformLocation(program, "u_lightWorldPosition");
 
   // Create a buffer to put positions in
   var positionBuffer = gl.createBuffer();
@@ -47,6 +48,7 @@ function main() {
 
   var fieldOfViewRadians = degToRad(60);
   var fRotationRadians = 0;
+  var lightWorldPosition = [20, 30, 50];
 
   drawScene();
 
@@ -127,10 +129,11 @@ function main() {
     var viewProjectionMatrix = m4.multiply(projectionMatrix, viewMatrix);
 
     // Draw a F at the origin
-    var worldInverseTransposeMatrix = m4.yRotation(fRotationRadians);
-    worldInverseTransposeMatrix = m4.transpose(worldInverseTransposeMatrix)
-    worldInverseTransposeMatrix = m4.inverse(worldInverseTransposeMatrix)
+    var worldMatrix = m4.yRotation(fRotationRadians);
+    gl.uniformMatrix4fv(worldLocation, false, worldMatrix)
 
+    var worldInverseTransposeMatrix = m4.transpose(worldMatrix)
+    worldInverseTransposeMatrix = m4.inverse(worldInverseTransposeMatrix)
     gl.uniformMatrix4fv(worldInverseTransposeLocation, false, worldInverseTransposeMatrix);
 
     // Multiply the matrices.
@@ -143,7 +146,7 @@ function main() {
     gl.uniform4fv(colorLocation, [0.2, 1, 0.2, 1]); // green
 
     // set the light direction.
-    gl.uniform3fv(reverseLightDirectionLocation, m4.normalize([0.5, 0.7, 1]));
+    gl.uniform3fv(lightWorldPositionLocation, lightWorldPosition);
 
     // Draw the geometry.
     var primitiveType = gl.TRIANGLES;

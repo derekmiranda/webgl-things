@@ -29,10 +29,15 @@ canvas {
 attribute vec4 a_position;
 attribute vec3 a_normal;
 
+uniform vec3 u_lightWorldPosition;
+
+uniform mat4 u_world;
 uniform mat4 u_worldViewProjection;
 uniform mat4 u_worldInverseTranspose;
 
 varying vec3 v_normal;
+
+varying vec3 v_surfaceToLight;
 
 void main() {
   // Multiply the position by the world view projectino matrix.
@@ -40,6 +45,13 @@ void main() {
 
   // orient normals and pass to fragment shader
   v_normal = (u_worldInverseTranspose * vec4(a_normal, 0)).xyz;
+
+  // compute world position of surface
+  vec3 surfaceWorldPosition = (u_world * a_position).xyz;
+  
+  // compute vector of surface to light
+  // and pass to fragment shader
+  v_surfaceToLight = u_lightWorldPosition - surfaceWorldPosition;
 }
 </script>
 <!-- fragment shader -->
@@ -48,8 +60,8 @@ precision mediump float;
 
 // Passed in from the vertex shader.
 varying vec3 v_normal;
+varying vec3 v_surfaceToLight;
 
-uniform vec3 u_reverseLightDirection;
 uniform vec4 u_color;
 
 void main() {
@@ -57,8 +69,9 @@ void main() {
   // so it will not be a unit vector. Normalizing it
   // will make it a unit vector again
   vec3 normal = normalize(v_normal);
+  vec3 surfaceToLightDirection = normalize(v_surfaceToLight);
 
-  float light = dot(normal, u_reverseLightDirection);
+  float light = dot(normal, surfaceToLightDirection);
 
   gl_FragColor = u_color;
 
