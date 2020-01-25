@@ -23,6 +23,8 @@ function main() {
   var colorLocation = gl.getUniformLocation(program, "u_color");
   var lightWorldPositionLocation =
       gl.getUniformLocation(program, "u_lightWorldPosition");
+  var viewWorldPositionLocation =
+      gl.getUniformLocation(program, "u_viewWorldPosition");
 
   // Create a buffer to put positions in
   var positionBuffer = gl.createBuffer();
@@ -121,6 +123,9 @@ function main() {
     var target = [0, 35, 0];
     var up = [0, 1, 0];
     var cameraMatrix = m4.lookAt(camera, target, up);
+    
+    // set view world (i.e. camera) position
+    gl.uniform3fv(viewWorldPositionLocation, camera)
 
     // Make a view matrix from the camera matrix.
     var viewMatrix = m4.inverse(cameraMatrix);
