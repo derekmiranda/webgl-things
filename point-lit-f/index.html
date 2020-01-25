@@ -71,6 +71,8 @@ varying vec3 v_surfaceToLight;
 varying vec3 v_surfaceToView;
 
 uniform vec4 u_color;
+uniform vec3 u_lightColor;
+uniform vec3 u_specularColor;
 uniform float u_shininess;
 
 void main() {
@@ -84,20 +86,20 @@ void main() {
   vec3 halfVector = normalize(surfaceToLightDirection + surfaceToViewDirection);
 
   float light = dot(normal, surfaceToLightDirection);
-
-  gl_FragColor = u_color;
-
-  // Lets multiply just the color portion (not the alpha)
-  // by the light
-  gl_FragColor.rgb *= light;
-
+  
   // apply specular highlight given shininess
   float specular = 0.0;
   if (light > 0.0) {
     specular += pow(dot(normal, halfVector), u_shininess);
   }
 
-  gl_FragColor.rgb += specular;
+  gl_FragColor = u_color;
+
+  // Lets multiply just the color portion (not the alpha)
+  // by the light
+  gl_FragColor.rgb *= light * u_lightColor;
+
+  gl_FragColor.rgb += specular * u_specularColor;
 }
 </script><!--
 for most samples webgl-utils only provides shader compiling/linking and

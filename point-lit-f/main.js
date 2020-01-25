@@ -21,6 +21,8 @@ function main() {
   var worldInverseTransposeLocation = gl.getUniformLocation(program, "u_worldInverseTranspose");
   var worldLocation = gl.getUniformLocation(program, "u_world");
   var colorLocation = gl.getUniformLocation(program, "u_color");
+  var lightColorLocation = gl.getUniformLocation(program, "u_lightColor");
+  var specularColorLocation = gl.getUniformLocation(program, "u_specularColor");
   var shininessLocation = gl.getUniformLocation(program, "u_shininess");
   var lightWorldPositionLocation =
       gl.getUniformLocation(program, "u_lightWorldPosition");
@@ -51,7 +53,7 @@ function main() {
 
   var fieldOfViewRadians = degToRad(60);
   var fRotationRadians = 0;
-  var lightWorldPosition = [20, 30, 50];
+  var lightWorldPosition = [20, 30, 60];
   var shininess = 150;
 
   drawScene();
@@ -157,6 +159,12 @@ function main() {
 
     // Set the color to use
     gl.uniform4fv(colorLocation, [0.2, 1, 0.2, 1]); // green
+
+    // set the light color
+    gl.uniform3fv(lightColorLocation, m4.normalize([1, 0.6, 0.6]));  // red light
+
+    // set the specular color
+    gl.uniform3fv(specularColorLocation, m4.normalize([1, 0.6, 0.6]));  // red light
 
     // set the light direction.
     gl.uniform3fv(lightWorldPositionLocation, lightWorldPosition);
