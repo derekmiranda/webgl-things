@@ -22,6 +22,7 @@ canvas {
 <div id="uiContainer">
   <div id="ui">
     <div id="fRotation"></div>
+    <div id="shininess"></div>
   </div>
 </div>
 <!-- vertex shader -->
@@ -70,6 +71,7 @@ varying vec3 v_surfaceToLight;
 varying vec3 v_surfaceToView;
 
 uniform vec4 u_color;
+uniform float u_shininess;
 
 void main() {
   // because v_normal is a varying it's interpolated
@@ -82,7 +84,6 @@ void main() {
   vec3 halfVector = normalize(surfaceToLightDirection + surfaceToViewDirection);
 
   float light = dot(normal, surfaceToLightDirection);
-  float specular = dot(normal, halfVector);
 
   gl_FragColor = u_color;
 
@@ -90,7 +91,12 @@ void main() {
   // by the light
   gl_FragColor.rgb *= light;
 
-  // just add in specular
+  // apply specular highlight given shininess
+  float specular = 0.0;
+  if (light > 0.0) {
+    specular += pow(dot(normal, halfVector), u_shininess);
+  }
+
   gl_FragColor.rgb += specular;
 }
 </script><!--

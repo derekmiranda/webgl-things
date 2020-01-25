@@ -21,6 +21,7 @@ function main() {
   var worldInverseTransposeLocation = gl.getUniformLocation(program, "u_worldInverseTranspose");
   var worldLocation = gl.getUniformLocation(program, "u_world");
   var colorLocation = gl.getUniformLocation(program, "u_color");
+  var shininessLocation = gl.getUniformLocation(program, "u_shininess");
   var lightWorldPositionLocation =
       gl.getUniformLocation(program, "u_lightWorldPosition");
   var viewWorldPositionLocation =
@@ -51,15 +52,22 @@ function main() {
   var fieldOfViewRadians = degToRad(60);
   var fRotationRadians = 0;
   var lightWorldPosition = [20, 30, 50];
+  var shininess = 150;
 
   drawScene();
 
   // Setup a ui.
   webglLessonsUI.setupSlider("#fRotation", {value: radToDeg(fRotationRadians), slide: updateRotation, min: -360, max: 360});
+  webglLessonsUI.setupSlider("#shininess", {value: shininess, slide: updateShininess, min: 1, max: 300 });
 
   function updateRotation(event, ui) {
     fRotationRadians = degToRad(ui.value);
     drawScene();
+  }
+
+  function updateShininess(e, ui) {
+    shininess = ui.value
+    drawScene()
   }
 
   // Draw the scene.
@@ -152,6 +160,9 @@ function main() {
 
     // set the light direction.
     gl.uniform3fv(lightWorldPositionLocation, lightWorldPosition);
+
+    // set shininess
+    gl.uniform1f(shininessLocation, shininess)
 
     // Draw the geometry.
     var primitiveType = gl.TRIANGLES;
