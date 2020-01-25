@@ -164,7 +164,7 @@ function main() {
     gl.uniform3fv(lightColorLocation, m4.normalize([1, 0.6, 0.6]));  // red light
 
     // set the specular color
-    gl.uniform3fv(specularColorLocation, m4.normalize([1, 0.6, 0.6]));  // red light
+    gl.uniform3fv(specularColorLocation, m4.normalize([1, 0.2, 0.2]));  // red light
 
     // set the light direction.
     gl.uniform3fv(lightWorldPositionLocation, lightWorldPosition);
